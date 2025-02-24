@@ -13,15 +13,20 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-playground/validator/v10"
+	koanfYAML "github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/v2"
 	"github.com/spf13/cobra"
 )
 
-var ErrNoNewVersion = errors.New("no new version specified")
-
 var EXIT_CODE_NO_NEW_VERSION = 8
+
+var (
+	ErrNoConfigFile = errors.New("config file not found")
+	ErrNoNewVersion = errors.New("no new version specified")
+)
 
 func versionFromFile() (string, error) {
 	var versionPath *pathlib.Path
@@ -54,7 +59,29 @@ func versionFromFile() (string, error) {
 	}
 	firstLine := strings.Split(string(fileBytes), "\n")[0]
 	return strings.TrimSuffix(firstLine, "\n"), nil
+}
 
+func findConfigFile() (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("getting working dir: %w", err)
+	}
+	dir := pathlib.NewPath(cwd)
+	for {
+		if len(dir.Parts()) == 1 {
+			break
+		}
+		configCandidate := dir.Join(".tag.yml")
+		exists, err := configCandidate.Exists()
+		if err != nil {
+			return "", fmt.Errorf("determining if %s exists: %w", configCandidate, err)
+		}
+		if exists {
+			return configCandidate.String(), nil
+		}
+		dir = dir.Parent()
+	}
+	return "", ErrNoConfigFile
 }
 
 func NewTagCmd() (*cobra.Command, error) {
@@ -73,14 +100,35 @@ func NewTagCmd() (*cobra.Command, error) {
 			); err != nil {
 				handleErr(err)
 			}
+			if !k.Exists("config") {
+				configFile, err := findConfigFile()
+				if err != nil {
+					if !errors.Is(err, ErrNoConfigFile) {
+						handleErr(err)
+					}
+				} else {
+					// We don't require a config file to be set, so only set this
+					// if the file was indeed found.
+					k.Set("config", configFile)
+				}
+			}
+			if k.Exists("config") {
+				if err := k.Load(file.Provider(k.String("config")), koanfYAML.Parser()); err != nil {
+					handleErr(err)
+				}
+			}
+
 			if err := k.Load(posflag.Provider(cmd.PersistentFlags(), ".", k), nil); err != nil {
 				handleErr(err)
 			}
-			version, err := versionFromFile()
-			if err != nil {
-				handleErr(err)
+
+			if !k.Exists("version") {
+				version, err := versionFromFile()
+				if err != nil {
+					handleErr(err)
+				}
+				k.Set("version", version)
 			}
-			k.Set("version", version)
 
 			tagger, err := NewTagger(k)
 			if err != nil {
@@ -122,8 +170,8 @@ func (t *Tagger) createTag(repo *git.Repository, version string) error {
 		}
 		_, err = repo.CreateTag(v, hash.Hash(), &git.CreateTagOptions{
 			Tagger: &object.Signature{
-				Name:  "Landon Clipp",
-				Email: "11232769+LandonTClipp@users.noreply.github.com",
+				Name:  t.GitName,
+				Email: t.GitEmail,
 				When:  time.Now(),
 			},
 			Message: v,
@@ -194,9 +242,18 @@ func NewTagger(k *koanf.Koanf) (*Tagger, error) {
 }
 
 type Tagger struct {
-	VersionFile string `koanf:"version-file"`
-	DryRun      bool   `koanf:"dry-run"`
-	Version     string `koanf:"version" validate:"required"`
+	ConfigFile string `koanf:"config"`
+	// DryRun will cause tag to print, but not execute, any actions.
+	DryRun bool `koanf:"dry-run"`
+	// GitEmail is the email provided for the git tags
+	GitEmail string `koanf:"git-email" validate:"required"`
+	// GitName is the name provided for the git tags
+	GitName string `koanf:"git-name" validate:"required"`
+	// TagMajor, if set to True, will create a major-version tag (e.g. v0, v1)
+	// that points to the same commit as the full tag.
+	TagMajor bool `koanf:"tag-major"`
+	// Version is the tag that is to be created.
+	Version string `koanf:"version" validate:"required"`
 }
 
 func (t *Tagger) Tag() (requestedVersion *semver.Version, previousVersion *semver.Version, err error) {
