@@ -47,3 +47,20 @@ jobs:
       - name: Push tags
         run: git push origin --tags --force
         if: steps.tag.outputs.tag_result == 0
+
+  release:
+    needs: tag
+    if: needs.tag.outputs.tag_result == 0
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6.2.1
+        with:
+          args: release --clean
+          version: "~> v2"
+        env:
+          GORELEASER_CURRENT_TAG: ${{ needs.tag.outputs.requested_version }}

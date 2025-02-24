@@ -7,7 +7,9 @@ require (
 	github.com/chigopher/pathlib v0.19.1
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/go-playground/validator/v10 v10.25.0
+	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/env v1.0.0
+	github.com/knadh/koanf/providers/file v1.1.2
 	github.com/knadh/koanf/providers/posflag v0.1.0
 	github.com/knadh/koanf/v2 v2.1.2
 	github.com/rs/zerolog v1.33.0
@@ -33,8 +35,6 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
-	github.com/knadh/koanf/parsers/yaml v0.1.0 // indirect
-	github.com/knadh/koanf/providers/file v1.1.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
