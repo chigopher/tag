@@ -164,7 +164,11 @@ func (t *Tagger) createTag(repo *git.Repository, version string) error {
 		return nil
 	}
 	majorVersion := strings.Split(version, ".")[0]
-	for _, v := range []string{version, majorVersion} {
+	versions := []string{version}
+	if t.TagMajor {
+		versions = append(versions, majorVersion)
+	}
+	for _, v := range versions {
 		if err := repo.DeleteTag(v); err != nil {
 			logger.Info().Err(err).Str("tag", v).Msg("failed to delete tag, but probably not an issue.")
 		}
