@@ -64,3 +64,4 @@ jobs:
           version: "~> v2"
         env:
           GORELEASER_CURRENT_TAG: ${{ needs.tag.outputs.requested_version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
