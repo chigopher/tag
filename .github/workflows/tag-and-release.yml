@@ -45,5 +45,5 @@ jobs:
           fi
           exit 0
       - name: Push tags
-        run: git push origin --tags
+        run: git push origin --tags --force
         if: steps.tag.outputs.tag_result == 0
