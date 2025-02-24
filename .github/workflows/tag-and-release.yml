@@ -23,9 +23,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: ./tools/go.mod
+          go-version-file: ./go.mod
           check-latest: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: go.sum
       - name: Run tagging commands
         id: tag
         run: |
