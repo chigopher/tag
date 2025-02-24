@@ -100,7 +100,7 @@ func NewTagCmd() (*cobra.Command, error) {
 		},
 	}
 	flags := cmd.PersistentFlags()
-	flags.Bool("dry-run", true, "print, but do not perform, any actions")
+	flags.Bool("dry-run", false, "print, but do not perform, any actions")
 
 	return cmd, nil
 }
