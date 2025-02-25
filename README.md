@@ -29,6 +29,10 @@ $ go run github.com/chigopher/tag@latest tag
 versions: v0.1.0,v0.0.0
 ```
 
+## Config Options
+
+All config options can be found [here](https://pkg.go.dev/github.com/chigopher/tag/cmd#Tagger).
+
 ## Exit Codes
 
 The tool exits with special exit codes that have specific meanings:
